@@ -19,6 +19,12 @@ func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/", routes.HomeHandler)
+
+	r.HandleFunc("/users", routes.GetUsersHandler).Methods("GET")
+	r.HandleFunc("/users/{i}", routes.GetUserHandler).Methods("GET") //para acceder a algun usuario en particular {i}
+	r.HandleFunc("/users", routes.PostUserHandler).Methods("POST")
+	r.HandleFunc("/users", routes.DeleteUserHandler).Methods("DELETE")
+
 	// Para inicializar el server
 	http.ListenAndServe(":3000", r)
 }
