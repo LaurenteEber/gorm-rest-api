@@ -6,6 +6,7 @@ import (
 
 	"github.com/LaurenteEber/gorm-rest-api/db"
 	"github.com/LaurenteEber/gorm-rest-api/models"
+	"github.com/gorilla/mux"
 )
 
 func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
@@ -13,11 +14,22 @@ func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 	var users []models.User
 	db.DB.Find(&users)
 	json.NewEncoder(w).Encode(&users)
-	w.Write([]byte("get users"))
 }
 
 func GetUserHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("get user"))
+	// para extraer las variables desde GET
+	var user models.User
+	params := mux.Vars(r)
+	db.DB.First(&user, params["id"])
+
+	if user.ID == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("User not found"))
+		return
+	}
+
+	db.DB.Model(&user).Association("Tasks").Find(&user.Tasks)
+	json.NewEncoder(w).Encode(&user)
 }
 
 func PostUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -36,5 +48,18 @@ func PostUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("delete "))
+	var user models.User
+	params := mux.Vars(r)
+	db.DB.First(&user, params["id"])
+
+	if user.ID == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("User not found"))
+		return
+	}
+
+	db.DB.Unscoped().Delete(&user) // to remove definetely on bd
+	// db.DB.Delete(&user) //only to mark as deleted
+	w.WriteHeader(http.StatusOK)
+
 }
